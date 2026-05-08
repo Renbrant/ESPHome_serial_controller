@@ -1,0 +1,618 @@
+# =========================================================
+# DELL 1609WX PROJECTOR
+# COMPLETE ESPHOME RS232 INTEGRATION
+# XIAO ESP32-C6 + MAX3232
+# =========================================================
+
+esphome:
+  name: dell-projector
+  friendly_name: Dell Projector
+
+esp32:
+  board: seeed_xiao_esp32c6
+  variant: esp32c6
+
+  framework:
+    type: esp-idf
+
+# =========================================================
+# LOGGING
+# =========================================================
+
+logger:
+  level: DEBUG
+  baud_rate: 115200
+
+# =========================================================
+# NETWORK
+# =========================================================
+
+api:
+
+ota:
+  platform: esphome
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+# =========================================================
+# UART RS232
+# =========================================================
+
+uart:
+  id: projector_uart
+
+  tx_pin: GPIO21
+  rx_pin: GPIO20
+
+  baud_rate: 19200
+  data_bits: 8
+  parity: NONE
+  stop_bits: 1
+
+  rx_buffer_size: 512
+
+  debug:
+    direction: BOTH
+
+    after:
+      timeout: 100ms
+
+    sequence:
+      - lambda: |-
+
+          if (bytes.size() < 9)
+            return;
+
+          if (bytes[0] != 0xBE || bytes[1] != 0xEF)
+            return;
+
+          std::string hex = "";
+
+          for (auto b : bytes) {
+            char buf[4];
+            sprintf(buf, "%02X ", b);
+            hex += buf;
+          }
+
+          ESP_LOGD("DELL", "RX: %s", hex.c_str());
+
+          uint8_t cmd = bytes[8];
+
+          // =================================================
+          // SYSTEM STATUS
+          // =================================================
+
+          if (cmd == 0xFF && bytes.size() >= 10) {
+
+            uint8_t state = bytes[9];
+
+            switch (state) {
+
+              case 0x01:
+                id(projector_status)
+                  ->publish_state("STANDBY");
+
+                id(projector_power)
+                  ->publish_state(false);
+                break;
+
+              case 0x02:
+                id(projector_status)
+                  ->publish_state("WARMING");
+
+                id(projector_power)
+                  ->publish_state(true);
+                break;
+
+              case 0x03:
+                id(projector_status)
+                  ->publish_state("ON");
+
+                id(projector_power)
+                  ->publish_state(true);
+                break;
+
+              case 0x04:
+                id(projector_status)
+                  ->publish_state("COOLING");
+
+                id(projector_power)
+                  ->publish_state(true);
+                break;
+            }
+          }
+
+          // =================================================
+          // CURRENT SOURCE
+          // =================================================
+
+          if (cmd == 0x26 && bytes.size() >= 10) {
+
+            uint8_t src = bytes[9];
+
+            switch (src) {
+
+              case 0x01:
+                id(projector_source)
+                  ->publish_state("VGA-1");
+                break;
+
+              case 0x03:
+                id(projector_source)
+                  ->publish_state("HDMI");
+                break;
+
+              case 0x05:
+                id(projector_source)
+                  ->publish_state("COMPOSITE");
+                break;
+
+              default:
+                id(projector_source)
+                  ->publish_state("UNKNOWN");
+                break;
+            }
+          }
+
+          // =================================================
+          // LAMP HOURS
+          // =================================================
+
+          if (cmd == 0x2F && bytes.size() >= 12) {
+
+            uint16_t hours =
+              (bytes[9] << 8) | bytes[10];
+
+            id(lamp_hours)
+              ->publish_state(hours);
+          }
+
+          // =================================================
+          // FIRMWARE VERSION
+          // =================================================
+
+          if (cmd == 0x30 && bytes.size() >= 12) {
+
+            char fw[32];
+
+            sprintf(
+              fw,
+              "%d.%d",
+              bytes[9],
+              bytes[10]
+            );
+
+            id(firmware_version)
+              ->publish_state(fw);
+          }
+
+          // =================================================
+          // BRIGHTNESS
+          // =================================================
+
+          if (cmd == 0x36 && bytes.size() >= 10) {
+
+            id(brightness_value)
+              ->publish_state(bytes[9]);
+          }
+
+          // =================================================
+          // CONTRAST
+          // =================================================
+
+          if (cmd == 0x38 && bytes.size() >= 10) {
+
+            id(contrast_value)
+              ->publish_state(bytes[9]);
+          }
+
+          // =================================================
+          // MUTE STATUS
+          // =================================================
+
+          if (cmd == 0x61 && bytes.size() >= 10) {
+
+            bool mute = bytes[9];
+
+            id(mute_status)
+              ->publish_state(mute);
+          }
+
+          // =================================================
+          // HIDE STATUS
+          // =================================================
+
+          if (cmd == 0x65 && bytes.size() >= 10) {
+
+            bool hidden = bytes[9];
+
+            id(hide_status)
+              ->publish_state(hidden);
+          }
+
+# =========================================================
+# TEXT SENSORS
+# =========================================================
+
+text_sensor:
+  - platform: template
+    name: "Projector Status"
+    id: projector_status
+
+  - platform: template
+    name: "Projector Source"
+    id: projector_source
+
+  - platform: template
+    name: "Firmware Version"
+    id: firmware_version
+
+# =========================================================
+# SENSORS
+# =========================================================
+
+sensor:
+  - platform: template
+    name: "Lamp Hours"
+    id: lamp_hours
+    unit_of_measurement: "h"
+
+  - platform: template
+    name: "Brightness"
+    id: brightness_value
+
+  - platform: template
+    name: "Contrast"
+    id: contrast_value
+
+# =========================================================
+# BINARY SENSORS
+# =========================================================
+
+binary_sensor:
+  - platform: template
+    name: "Projector Power"
+    id: projector_power
+
+  - platform: template
+    name: "Mute Status"
+    id: mute_status
+
+  - platform: template
+    name: "Hide Status"
+    id: hide_status
+
+# =========================================================
+# POWER
+# =========================================================
+
+switch:
+  - platform: template
+    name: "Projector Power"
+
+    lambda: |-
+      return id(projector_power).state;
+
+    turn_on_action:
+      - uart.write:
+          id: projector_uart
+          data:
+            [0xBE,0xEF,0x10,0x05,0x00,0xC6,0xFF,0x11,0x11,0x01,0x00,0x01]
+
+    turn_off_action:
+      - uart.write:
+          id: projector_uart
+          data:
+            [0xBE,0xEF,0x10,0x05,0x00,0x0C,0x3E,0x11,0x11,0x01,0x00,0x18]
+
+  # =======================================================
+  # MUTE
+  # =======================================================
+
+  - platform: template
+    name: "Mute"
+
+    optimistic: true
+
+    turn_on_action:
+      - uart.write:
+          id: projector_uart
+          data:
+            [0xBE,0xEF,0x10,0x05,0x00,0xC3,0xFF,0x11,0x11,0x01,0x00,0x0D]
+
+  # =======================================================
+  # HIDE
+  # =======================================================
+
+  - platform: template
+    name: "Hide Screen"
+
+    optimistic: true
+
+    turn_on_action:
+      - uart.write:
+          id: projector_uart
+          data:
+            [0xBE,0xEF,0x10,0x05,0x00,0x02,0x7E,0x11,0x11,0x01,0x00,0x0F]
+
+# =========================================================
+# BUTTONS
+# =========================================================
+
+button:
+
+  # =======================================================
+  # MENU NAVIGATION
+  # =======================================================
+
+  - platform: template
+    name: "Menu"
+
+    on_press:
+      - uart.write:
+          id: projector_uart
+          data:
+            [0xBE,0xEF,0x10,0x05,0x00,0xC7,0xBF,0x11,0x11,0x01,0x00,0x02]
+
+  - platform: template
+    name: "Enter"
+
+    on_press:
+      - uart.write:
+          id: projector_uart
+          data:
+            [0xBE,0xEF,0x10,0x05,0x00,0xF6,0x3F,0x11,0x11,0x01,0x00,0x40]
+
+  - platform: template
+    name: "Up"
+
+    on_press:
+      - uart.write:
+          id: projector_uart
+          data:
+            [0xBE,0xEF,0x10,0x05,0x00,0x07,0x7E,0x11,0x11,0x01,0x00,0x03]
+
+  - platform: template
+    name: "Down"
+
+    on_press:
+      - uart.write:
+          id: projector_uart
+          data:
+            [0xBE,0xEF,0x10,0x05,0x00,0xC5,0x3F,0x11,0x11,0x01,0x00,0x04]
+
+  - platform: template
+    name: "Left"
+
+    on_press:
+      - uart.write:
+          id: projector_uart
+          data:
+            [0xBE,0xEF,0x10,0x05,0x00,0x05,0xFE,0x11,0x11,0x01,0x00,0x05]
+
+  - platform: template
+    name: "Right"
+
+    on_press:
+      - uart.write:
+          id: projector_uart
+          data:
+            [0xBE,0xEF,0x10,0x05,0x00,0x04,0xBE,0x11,0x11,0x01,0x00,0x06]
+
+  # =======================================================
+  # SOURCE CONTROL
+  # =======================================================
+
+  - platform: template
+    name: "Source VGA-1"
+
+    on_press:
+      - uart.write:
+          id: projector_uart
+          data:
+            [0xBE,0xEF,0x10,0x05,0x00,0xCC,0xFF,0x11,0x11,0x01,0x00,0x19]
+
+  - platform: template
+    name: "Source VGA-2"
+
+    on_press:
+      - uart.write:
+          id: projector_uart
+          data:
+            [0xBE,0xEF,0x10,0x05,0x00,0x28,0xFE,0x11,0x11,0x01,0x00,0x69]
+
+  - platform: template
+    name: "Source DVI"
+
+    on_press:
+      - uart.write:
+          id: projector_uart
+          data:
+            [0xBE,0xEF,0x10,0x05,0x00,0x3A,0x3E,0x11,0x11,0x01,0x00,0x50]
+
+  - platform: template
+    name: "Source S-Video"
+
+    on_press:
+      - uart.write:
+          id: projector_uart
+          data:
+            [0xBE,0xEF,0x10,0x05,0x00,0x1F,0xBE,0x11,0x11,0x01,0x00,0x22]
+
+  - platform: template
+    name: "Source Composite"
+
+    on_press:
+      - uart.write:
+          id: projector_uart
+          data:
+            [0xBE,0xEF,0x10,0x05,0x00,0xDF,0x7F,0x11,0x11,0x01,0x00,0x23]
+
+  # =======================================================
+  # AUDIO
+  # =======================================================
+
+  - platform: template
+    name: "Volume Up"
+
+    on_press:
+      - uart.write:
+          id: projector_uart
+          data:
+            [0xBE,0xEF,0x10,0x05,0x00,0x00,0xFE,0x11,0x11,0x01,0x00,0x09]
+
+  - platform: template
+    name: "Volume Down"
+
+    on_press:
+      - uart.write:
+          id: projector_uart
+          data:
+            [0xBE,0xEF,0x10,0x05,0x00,0x01,0xBE,0x11,0x11,0x01,0x00,0x0A]
+
+  # =======================================================
+  # IMAGE
+  # =======================================================
+
+  - platform: template
+    name: "Zoom In"
+
+    on_press:
+      - uart.write:
+          id: projector_uart
+          data:
+            [0xBE,0xEF,0x10,0x05,0x00,0xC1,0x7F,0x11,0x11,0x01,0x00,0x0B]
+
+  - platform: template
+    name: "Zoom Out"
+
+    on_press:
+      - uart.write:
+          id: projector_uart
+          data:
+            [0xBE,0xEF,0x10,0x05,0x00,0x03,0x3E,0x11,0x11,0x01,0x00,0x0C]
+
+  - platform: template
+    name: "Video Mode"
+
+    on_press:
+      - uart.write:
+          id: projector_uart
+          data:
+            [0xBE,0xEF,0x10,0x05,0x00,0xCA,0x3F,0x11,0x11,0x01,0x00,0x10]
+
+  # =======================================================
+  # QUERIES
+  # =======================================================
+
+  - platform: template
+    id: query_system_status
+    name: "Query System Status"
+
+    on_press:
+      - uart.write:
+          id: projector_uart
+          data:
+            [0xBE,0xEF,0x10,0x05,0x00,0x46,0x7E,0x11,0x11,0x01,0x00,0xFF]
+
+  - platform: template
+    id: query_lamp_hours
+    name: "Query Lamp Hours"
+
+    on_press:
+      - uart.write:
+          id: projector_uart
+          data:
+            [0xBE,0xEF,0x10,0x05,0x00,0xDA,0x7F,0x11,0x11,0x01,0x00,0x2F]
+
+  - platform: template
+    id: query_firmware
+    name: "Query Firmware"
+
+    on_press:
+      - uart.write:
+          id: projector_uart
+          data:
+            [0xBE,0xEF,0x10,0x05,0x00,0x12,0x3E,0x11,0x11,0x01,0x00,0x30]
+
+  - platform: template
+    id: query_source
+    name: "Query Source"
+
+    on_press:
+      - uart.write:
+          id: projector_uart
+          data:
+            [0xBE,0xEF,0x10,0x05,0x00,0xDC,0xBF,0x11,0x11,0x01,0x00,0x26]
+
+  - platform: template
+    id: query_brightness
+    name: "Query Brightness"
+
+    on_press:
+      - uart.write:
+          id: projector_uart
+          data:
+            [0xBE,0xEF,0x10,0x05,0x00,0x10,0xBE,0x11,0x11,0x01,0x00,0x36]
+
+  - platform: template
+    id: query_contrast
+    name: "Query Contrast"
+
+    on_press:
+      - uart.write:
+          id: projector_uart
+          data:
+            [0xBE,0xEF,0x10,0x05,0x00,0xD4,0x3F,0x11,0x11,0x01,0x00,0x38]
+
+  - platform: template
+    id: query_mute
+    name: "Query Mute State"
+
+    on_press:
+      - uart.write:
+          id: projector_uart
+          data:
+            [0xBE,0xEF,0x10,0x05,0x00,0xEE,0xFF,0x11,0x11,0x01,0x00,0x61]
+
+  - platform: template
+    id: query_hide
+    name: "Query Hide State"
+
+    on_press:
+      - uart.write:
+          id: projector_uart
+          data:
+            [0xBE,0xEF,0x10,0x05,0x00,0x2D,0xFE,0x11,0x11,0x01,0x00,0x65]
+
+# =========================================================
+# AUTOMATIC POLLING
+# =========================================================
+
+interval:
+  - interval: 30s
+
+    then:
+      - button.press: query_system_status
+
+      - delay: 1s
+
+      - button.press: query_source
+
+      - delay: 1s
+
+      - button.press: query_lamp_hours
+
+      - delay: 1s
+
+      - button.press: query_firmware
+
+      - delay: 1s
+
+      - button.press: query_mute
+
+      - delay: 1s
+
+      - button.press: query_hide

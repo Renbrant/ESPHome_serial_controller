@@ -1,0 +1,309 @@
+type: sections
+max_columns: 4
+title: Projector
+path: projector
+icon: mdi:projector
+sections:
+  - type: grid
+    cards:
+      - type: tile
+        entity: switch.esphome_projector_serial_projector_power
+        name: Power
+        vertical: false
+        features_position: bottom
+      - type: tile
+        entity: sensor.esphome_projector_serial_projector_status
+        name: Status
+        vertical: false
+        features_position: bottom
+      - type: tile
+        entity: sensor.esphome_projector_serial_projector_source
+        name: Source
+        vertical: false
+        features_position: bottom
+      - type: tile
+        entity: sensor.esphome_projector_serial_lamp_hours
+        name: Lamp
+        vertical: false
+        features_position: bottom
+  - type: grid
+    cards:
+      - show_name: true
+        show_icon: true
+        type: button
+        name: VGA-1
+        icon: mdi:serial-port
+        tap_action:
+          action: perform-action
+          perform_action: button.press
+          target:
+            entity_id: button.source_vga_1
+      - show_name: true
+        show_icon: true
+        type: button
+        name: VGA-2
+        icon: mdi:serial-port
+        tap_action:
+          action: perform-action
+          perform_action: button.press
+          target:
+            entity_id: button.source_vga_2
+      - type: button
+        name: DVI
+        icon: mdi:video-input-hdmi
+        tap_action:
+          action: perform-action
+          perform_action: button.press
+          target:
+            entity_id: button.source_dvi
+      - type: button
+        name: S-Video
+        icon: mdi:video-vintage
+        tap_action:
+          action: perform-action
+          perform_action: button.press
+          target:
+            entity_id: button.source_s_video
+      - show_name: true
+        show_icon: true
+        type: button
+        name: Composite
+        icon: mdi:video-input-component
+        tap_action:
+          action: perform-action
+          perform_action: button.press
+          target:
+            entity_id: button.source_composite
+  - type: grid
+    cards:
+      - type: button
+        name: Menu
+        icon: mdi:menu
+        tap_action:
+          action: perform-action
+          perform_action: button.press
+          target:
+            entity_id: button.menu
+      - type: button
+        name: Up
+        icon: mdi:chevron-up
+        tap_action:
+          action: perform-action
+          perform_action: button.press
+          target:
+            entity_id: button.up
+      - type: button
+        name: Enter
+        icon: mdi:check-circle
+        tap_action:
+          action: perform-action
+          perform_action: button.press
+          target:
+            entity_id: button.enter
+      - type: button
+        name: Down
+        icon: mdi:chevron-down
+        tap_action:
+          action: perform-action
+          perform_action: button.press
+          target:
+            entity_id: button.down
+      - type: button
+        name: Left
+        icon: mdi:chevron-left
+        tap_action:
+          action: perform-action
+          perform_action: button.press
+          target:
+            entity_id: button.left
+      - type: button
+        name: Right
+        icon: mdi:chevron-right
+        tap_action:
+          action: perform-action
+          perform_action: button.press
+          target:
+            entity_id: button.right
+  - type: grid
+    cards:
+      - type: button
+        name: Vol +
+        icon: mdi:volume-plus
+        tap_action:
+          action: perform-action
+          perform_action: button.press
+          target:
+            entity_id: button.volume_up
+      - type: button
+        name: Vol -
+        icon: mdi:volume-minus
+        tap_action:
+          action: perform-action
+          perform_action: button.press
+          target:
+            entity_id: button.volume_down
+      - type: tile
+        entity: switch.esphome_projector_serial_mute
+        name: Mute
+        icon: mdi:volume-off
+        vertical: false
+        features_position: bottom
+      - type: tile
+        entity: switch.esphome_projector_serial_hide_screen
+        name: Hide
+        vertical: false
+        features_position: bottom
+      - type: button
+        name: Zoom +
+        icon: mdi:magnify-plus
+        tap_action:
+          action: perform-action
+          perform_action: button.press
+          target:
+            entity_id: button.zoom_in
+      - type: button
+        name: Zoom -
+        icon: mdi:magnify-minus
+        tap_action:
+          action: perform-action
+          perform_action: button.press
+          target:
+            entity_id: button.zoom_out
+      - type: button
+        name: Video
+        icon: mdi:movie-open
+        tap_action:
+          action: perform-action
+          perform_action: button.press
+          target:
+            entity_id: button.video_mode
+  - type: grid
+    cards:
+      - type: button
+        name: Keystone +
+        icon: mdi:arrow-expand-vertical
+        tap_action:
+          action: perform-action
+          perform_action: button.press
+          target:
+            entity_id: button.v_keystone_up
+      - type: button
+        name: Keystone -
+        icon: mdi:arrow-collapse-vertical
+        tap_action:
+          action: perform-action
+          perform_action: button.press
+          target:
+            entity_id: button.v_keystone_down
+      - type: button
+        name: Aspect
+        icon: mdi:aspect-ratio
+        tap_action:
+          action: perform-action
+          perform_action: button.press
+          target:
+            entity_id: button.aspect_ratio
+  - type: grid
+    cards:
+      - type: button
+        name: R-Sync
+        icon: mdi:sync
+        tap_action:
+          action: perform-action
+          perform_action: button.press
+          target:
+            entity_id: button.r_sync
+      - type: button
+        name: Search
+        icon: mdi:magnify
+        tap_action:
+          action: perform-action
+          perform_action: button.press
+          target:
+            entity_id: button.source_toggle
+      - type: button
+        name: Factory
+        icon: mdi:factory
+        tap_action:
+          action: perform-action
+          perform_action: button.press
+          target:
+            entity_id: button.factory_reset
+      - type: button
+        name: ECO ON
+        icon: mdi:leaf
+        tap_action:
+          action: perform-action
+          perform_action: button.press
+          target:
+            entity_id: button.eco_mode_on
+      - type: button
+        name: ECO OFF
+        icon: mdi:leaf-off
+        tap_action:
+          action: perform-action
+          perform_action: button.press
+          target:
+            entity_id: button.eco_mode_off
+  - type: grid
+    cards:
+      - type: tile
+        entity: binary_sensor.esphome_projector_serial_mute_status
+        name: Mute
+        vertical: false
+        features_position: bottom
+      - type: tile
+        entity: binary_sensor.esphome_projector_serial_hide_status
+        name: Hidden
+        vertical: false
+        features_position: bottom
+      - type: tile
+        entity: sensor.esphome_projector_serial_brightness
+        name: Brightness
+        vertical: false
+        features_position: bottom
+      - type: tile
+        entity: sensor.esphome_projector_serial_contrast
+        name: Contrast
+        vertical: false
+        features_position: bottom
+      - type: tile
+        entity: sensor.esphome_projector_serial_firmware_version
+        name: Firmware
+        vertical: false
+        features_position: bottom
+  - type: grid
+    cards:
+      - type: button
+        name: Status
+        icon: mdi:refresh
+        tap_action:
+          action: perform-action
+          perform_action: button.press
+          target:
+            entity_id: button.query_system_status
+      - type: button
+        name: Source
+        icon: mdi:refresh
+        tap_action:
+          action: perform-action
+          perform_action: button.press
+          target:
+            entity_id: button.query_source
+      - type: button
+        name: Lamp
+        icon: mdi:refresh
+        tap_action:
+          action: perform-action
+          perform_action: button.press
+          target:
+            entity_id: button.query_lamp_hours
+      - type: button
+        name: Firmware
+        icon: mdi:refresh
+        tap_action:
+          action: perform-action
+          perform_action: button.press
+          target:
+            entity_id: button.query_firmware
+cards: []
