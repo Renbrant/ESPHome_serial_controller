@@ -33,6 +33,16 @@ The board is designed to be compact and modular, leveraging the Seeed Studio XIA
 
 ---
 
+## 📊 Dashboard Preview
+
+Example of the Home Assistant dashboard showing real-time commands and status mapping for the projector via RS232:
+
+<p align="center">
+  <img src="Firmware/Under%20development/v0.1/Dashboard.png" width="600" alt="Home Assistant Dashboard Preview">
+</p>
+
+---
+
 ## 💡 Why RS232 Over IR?
 
 While Infrared (IR) is common, its one-way nature lacks reliability. By using the serial protocol, you gain:
@@ -69,10 +79,6 @@ While Infrared (IR) is common, its one-way nature lacks reliability. By using th
 ## 🤝 Contributions
 
 This is an open-source project for the community. If you want to add support for new hardware or optimize the ESPHome logic, your contributions are welcome!
-
-1.  **Fork** the project.
-2.  Create a **Branch** for your feature (`git checkout -b feature/new-device-support`).
-3.  Open a **Pull Request**.
 
 ---
 
